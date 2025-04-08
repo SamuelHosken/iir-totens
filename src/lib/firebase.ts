@@ -12,12 +12,20 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_APP_ID',
 ] as const;
 
-// Validar variáveis de ambiente
-requiredEnvVars.forEach((varName) => {
-  if (!process.env[varName]) {
-    throw new Error(`Missing environment variable: ${varName}`);
+function validateEnv() {
+  const missingVars = requiredEnvVars.filter(
+    varName => !process.env[varName]
+  );
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}`
+    );
   }
-});
+}
+
+// Validar variáveis de ambiente
+validateEnv();
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

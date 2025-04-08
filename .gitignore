@@ -44,7 +44,21 @@ firebase-debug.*.log*
 .firebase/
 serviceAccountKey.json
 
-# OS generated files
+# Package managers
+yarn.lock
+.yarn/
+.yarnrc
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -53,18 +67,7 @@ serviceAccountKey.json
 ehthumbs.db
 Thumbs.db
 
-# IDE specific files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/settings.json
-.idea/
-*.swp
-*.swo
-*.swn
-*.bak
-
-# Build output
+# Build
 dist/
 build/
 .next/
@@ -72,3 +75,6 @@ build/
 # Logs
 logs
 *.log 
+
+
+.env
