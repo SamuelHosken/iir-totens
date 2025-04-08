@@ -23,7 +23,7 @@ export default function Login() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.push('/painel');
-    } catch (err) {
+    } catch (error) {
       setError('Erro ao fazer login. Tente novamente.');
     }
   };

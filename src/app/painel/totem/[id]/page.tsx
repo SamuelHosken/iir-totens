@@ -79,7 +79,7 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
 
   useEffect(() => {
     fetchTotem();
-  }, []);
+  }, [fetchTotem]);
 
   const fetchTotem = async () => {
     try {
