@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 import { Analytics, getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDK6ysfNMV4H_E5zcjdbClkoI1M-AWrr5k",
-  authDomain: "iir-lab-totens.firebaseapp.com",
-  projectId: "iir-lab-totens",
-  storageBucket: "iir-lab-totens.firebasestorage.app",
-  messagingSenderId: "502917274220",
-  appId: "1:502917274220:web:3086e183524a85eebc1649",
-  measurementId: "G-QJZYLVC8T6"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
