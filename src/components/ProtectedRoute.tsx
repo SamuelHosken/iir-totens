@@ -1,40 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
+import { CircularProgress, Box } from '@mui/material';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    
-    if (!authLoading && !user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, loading, router]);
 
-  // Não renderiza nada durante SSR
-  if (!isClient) {
-    return null;
-  }
-
-  if (authLoading) {
+  if (loading) {
     return (
-      <Box 
+      <Box
         sx={{
+          height: '100vh',
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '100vh',
+          justifyContent: 'center',
           bgcolor: '#000000'
         }}
       >
-        <CircularProgress />
+        <CircularProgress sx={{ color: 'white' }} />
       </Box>
     );
   }

@@ -1,5 +1,5 @@
 import { Box, Typography, Paper } from '@mui/material';
-import { LayoutProps } from '../types';
+import { LayoutProps } from '@/types/layouts';
 import styles from './VerticalLayout.module.css';
 
 export function VerticalLayout({ totem, currentTime, isEventoAtual }: LayoutProps) {

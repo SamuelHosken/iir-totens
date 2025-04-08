@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Paper } from '@mui/material';
-import { LayoutProps } from '../types';
+import { LayoutProps } from '@/types/layouts';
 import styles from './TVLayout.module.css';
 
 export function TVLayout({ totem, currentTime, isEventoAtual }: LayoutProps) {

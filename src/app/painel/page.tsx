@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -44,45 +44,34 @@ import {
 } from '@mui/icons-material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { HorizontalDisplayIcon, VerticalDisplayIcon } from '@/components/icons/DisplayIcons';
-import { colors } from '@/styles/colors';
+import { colors } from '@/theme';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-
-interface Totem {
-  id: string;
-  nome: string;
-  tipo: 'tv' | 'vertical';
-  cronograma: any[];
-}
+import { useAuth } from '@/contexts/AuthContext';
+import { Totem, TotemFormData } from '@/types';
 
 export default function Painel() {
   const theme = useTheme();
   const [totens, setTotens] = useState<Totem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [novoTotem, setNovoTotem] = useState({ 
+  const [novoTotem, setNovoTotem] = useState<TotemFormData>({ 
     nome: '',
-    tipo: 'tv' as 'tv' | 'vertical'
+    tipo: 'tv'
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { signOut } = useAuth();
 
-  useEffect(() => {
-    fetchTotens();
-  }, []);
-
-  const fetchTotens = async () => {
+  const fetchTotens = useCallback(async () => {
     setLoading(true);
     try {
       const querySnapshot = await getDocs(collection(db, 'totens'));
       const totensData = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        nome: doc.data().nome,
-        tipo: doc.data().tipo,
-        cronograma: doc.data().cronograma
-      }));
+        ...doc.data()
+      })) as Totem[];
       
-      // Ordena por ID numérico
       const totensSorted = totensData.sort((a, b) => Number(a.id) - Number(b.id));
       setTotens(totensSorted);
     } catch (error) {
@@ -90,7 +79,11 @@ export default function Painel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTotens();
+  }, [fetchTotens]);
 
   const getNextId = async () => {
     try {
@@ -150,7 +143,7 @@ export default function Painel() {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await signOut();
       router.push('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);

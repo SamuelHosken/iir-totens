@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -36,6 +36,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { colors } from '@/theme';
 import { ChangeEvent } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Slide {
   id: string;
@@ -67,6 +68,7 @@ const ordenarPorHorario = (cronograma: Slide[]) => {
 export default function GerenciarCronograma({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { signOut } = useAuth();
   const [totem, setTotem] = useState<Totem | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSlideForm, setShowSlideForm] = useState(false);
@@ -77,7 +79,7 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
     conteudo: ''
   });
 
-  const fetchTotem = async () => {
+  const fetchTotem = useCallback(async () => {
     try {
       const totemDoc = await getDoc(doc(db, 'totens', id));
       if (totemDoc.exists()) {
@@ -95,11 +97,11 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchTotem();
-  }, []);
+  }, [fetchTotem]);
 
   const handleAddSlide = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +178,7 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await signOut();
       router.push('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
