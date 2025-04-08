@@ -1,0 +1,67 @@
+.verticalContainer {
+  min-height: 100vh;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 3rem;
+  text-align: center;
+  border-bottom: 2px solid var(--primary);
+  background: linear-gradient(to right, var(--background-dark), var(--background));
+}
+
+.title {
+  color: var(--primary);
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.clock {
+  color: var(--text-secondary);
+  font-size: 5rem;
+  font-weight: bold;
+}
+
+.timeline {
+  flex-grow: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  overflow-y: auto;
+}
+
+.event {
+  padding: 2rem;
+  border-radius: 1rem;
+  background-color: var(--card-background);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.activeEvent {
+  border: 3px solid var(--primary);
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255, 105, 180, 0.2);
+}
+
+.eventTime {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.eventTitle {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.eventContent {
+  font-size: 1.8rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+} 

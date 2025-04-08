@@ -1,0 +1,9 @@
+declare module 'next/link';
+declare module 'next/navigation';
+declare module 'next/font/google';
+declare module '@mui/material/*';
+declare module '@mui/icons-material';
+declare module '@mui/material';
+declare module '@emotion/react';
+declare module '@emotion/styled';
+declare module '@emotion/cache'; 
