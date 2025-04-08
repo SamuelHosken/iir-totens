@@ -1,4 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
   --primary: #FF69B4;
   --primary-light: #FF8DC7;
   --primary-dark: #D4478B;
@@ -15,10 +22,10 @@
   }
 
   body {
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-start-rgb));
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
-    background-color: var(--background);
-    color: white;
   }
 }
 

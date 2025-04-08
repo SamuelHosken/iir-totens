@@ -6,11 +6,7 @@ module.exports = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in',
-      },
-    },
+    extend: {},
   },
   plugins: [],
 } 
