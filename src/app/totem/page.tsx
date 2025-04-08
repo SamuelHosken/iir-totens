@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { Box } from '@mui/material';
+import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 
 interface TotemData {
   periodo: string;
@@ -19,11 +21,18 @@ interface TotemDisplay {
   duracao: string;
 }
 
-export default function Totem() {
+function TotemContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get('id');
   const [totemData, setTotemData] = useState<TotemDisplay | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Redireciona para a página específica do totem
+  if (id) {
+    router.push(`/totem/${id}`);
+    return null;
+  }
 
   useEffect(() => {
     const fetchTotemData = async () => {
@@ -54,9 +63,18 @@ export default function Totem() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <Box
+        sx={{
+          height: '100vh',
+          width: '100vw',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#000000'
+        }}
+      >
+        <LoadingScreen />
+      </Box>
     );
   }
 
@@ -85,5 +103,13 @@ export default function Totem() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TotemPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <TotemContent />
+    </Suspense>
   );
 } 
