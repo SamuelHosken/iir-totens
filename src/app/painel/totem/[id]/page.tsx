@@ -77,10 +77,6 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
     conteudo: ''
   });
 
-  useEffect(() => {
-    fetchTotem();
-  }, [fetchTotem]);
-
   const fetchTotem = async () => {
     try {
       const totemDoc = await getDoc(doc(db, 'totens', id));
@@ -100,6 +96,10 @@ export default function GerenciarCronograma({ params }: { params: Promise<{ id: 
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTotem();
+  }, []);
 
   const handleAddSlide = async (e: React.FormEvent) => {
     e.preventDefault();
