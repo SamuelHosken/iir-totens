@@ -1,512 +1,219 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Link from 'next/link';
-import {
-  AppBar,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CircularProgress,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Divider,
-  IconButton,
-  TextField,
-  Toolbar,
-  Typography,
-  useTheme,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Stack,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Visibility as VisibilityIcon,
-  Menu as MenuIcon,
-  Tv as TvIcon,
-  PhoneAndroid as VerticalIcon,
-  LogoutOutlined as LogoutIcon
-} from '@mui/icons-material';
-import { SelectChangeEvent } from '@mui/material/Select';
-import { HorizontalDisplayIcon, VerticalDisplayIcon } from '@/components/icons/DisplayIcons';
-import { colors } from '@/theme';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Totem, TotemFormData } from '@/types';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { Totem } from '@/types';
+import { ROUTES } from '@/constants';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+// Shadcn Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+
+// Icons
+import { MonitorIcon, SmartphoneIcon, PlusIcon, TrashIcon, SettingsIcon, LogOutIcon, EyeIcon } from 'lucide-react';
 
 export default function Painel() {
-  const theme = useTheme();
   const [totens, setTotens] = useState<Totem[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [novoTotem, setNovoTotem] = useState<TotemFormData>({ 
-    nome: '',
-    tipo: 'tv'
-  });
-  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [novoTotem, setNovoTotem] = useState({ nome: '', tipo: 'tv' });
   const router = useRouter();
   const { signOut } = useAuth();
 
-  const fetchTotens = useCallback(async () => {
-    setLoading(true);
-    try {
-      const querySnapshot = await getDocs(collection(db, 'totens'));
-      const totensData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Totem[];
-      
-      const totensSorted = totensData.sort((a, b) => Number(a.id) - Number(b.id));
-      setTotens(totensSorted);
-    } catch (error) {
-      console.error('Erro ao buscar totens:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchTotens();
-  }, [fetchTotens]);
+  }, []);
 
-  const getNextId = async () => {
-    try {
-      // Busca todos os totens existentes
-      const querySnapshot = await getDocs(collection(db, 'totens'));
-      const totensData = querySnapshot.docs.map(doc => ({
-        id: doc.id
-      }));
-
-      // Se não houver totens, começa do 1
-      if (totensData.length === 0) {
-        return "1";
-      }
-
-      // Encontra o maior ID numérico
-      const maxId = totensData.reduce((max, totem) => {
-        const id = parseInt(totem.id);
-        return isNaN(id) ? max : Math.max(max, id);
-      }, 0);
-
-      // Retorna o próximo ID na sequência
-      return (maxId + 1).toString();
-    } catch (error) {
-      console.error('Erro ao gerar ID:', error);
-      throw error;
-    }
+  const fetchTotens = async () => {
+    const querySnapshot = await getDocs(collection(db, 'totens'));
+    const totensData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Totem[];
+    setTotens(totensData);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateTotem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const nextId = await getNextId();
-      
-      await setDoc(doc(db, 'totens', nextId), {
+      await addDoc(collection(db, 'totens'), {
         nome: novoTotem.nome,
         tipo: novoTotem.tipo,
         cronograma: []
       });
-
-      fetchTotens();
-      setShowForm(false);
       setNovoTotem({ nome: '', tipo: 'tv' });
+      setIsDialogOpen(false);
+      fetchTotens();
     } catch (error) {
       console.error('Erro ao criar totem:', error);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteTotem = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'totens', id));
-      setShowDeleteConfirm(null);
       fetchTotens();
     } catch (error) {
       console.error('Erro ao deletar totem:', error);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
-  };
-
   return (
     <ProtectedRoute>
-      <Box 
-        sx={{ 
-          flexGrow: 1, 
-          minHeight: '100vh', 
-          bgcolor: '#000000', // Forçando preto puro
-          color: colors.white.main
-        }}
-      >
-        <AppBar 
-          position="fixed" 
-          sx={{ 
-            backgroundColor: '#000000',
-            borderBottom: `1px solid ${colors.gray.medium}`
-          }} 
-          elevation={0}
-        >
-          <Toolbar>
-            <Typography 
-              variant="h6" 
-              component="div" 
-              sx={{ 
-                flexGrow: 1,
-                display: { 
-                  xs: 'none', // Esconde em mobile
-                  sm: 'block' // Mostra em telas maiores
-                },
-                fontSize: {
-                  sm: '1.25rem'
-                }
-              }}
-            >
-              Sistema de Totens
-            </Typography>
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="border-b border-[oklch(1_0_0_/_0.05)] bg-card">
+          <div className="container flex h-16 items-center justify-between px-4">
+            <h1 className="text-lg font-medium">Painel de Controle</h1>
             <Button
-              startIcon={<AddIcon />}
-              onClick={() => setShowForm(true)}
-              variant="contained"
-              sx={{ mr: 2 }}
+              variant="ghost"
+              size="sm"
+              className="hover:bg-background"
+              onClick={signOut}
             >
-              Novo Totem
-            </Button>
-            <Button
-              color="inherit"
-              startIcon={<LogoutIcon />}
-              onClick={handleLogout}
-              variant="outlined"
-              sx={{
-                borderColor: colors.gray.medium,
-                '&:hover': {
-                  borderColor: colors.white.main,
-                  bgcolor: 'transparent'
-                }
-              }}
-            >
+              <LogOutIcon className="h-4 w-4 mr-2" />
               Sair
             </Button>
-          </Toolbar>
-        </AppBar>
-        <Toolbar /> {/* Espaçamento para o AppBar fixo */}
+          </div>
+        </header>
 
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-              <CircularProgress />
-            </Box>
-          ) : totens.length === 0 ? (
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              minHeight="60vh"
-              textAlign="center"
-              sx={{ color: colors.white.main }}
-            >
-              <AddIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Nenhum totem criado
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Clique em "Novo Totem" para começar
-              </Typography>
-            </Box>
-          ) : (
-            <Box
-              display="grid"
-              gridTemplateColumns="repeat(auto-fill, minmax(300px, 1fr))"
-              gap={3}
-            >
-              {totens.map(totem => (
-                <Card 
-                  key={totem.id} 
-                  variant="outlined"
-                  sx={{ 
-                    bgcolor: '#000000',
-                    borderColor: colors.gray.medium,
-                    '& .MuiCardContent-root': {
-                      bgcolor: '#000000'
-                    }
-                  }}
+        <main className="container px-4 py-8 bg-background/95">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-semibold">Meus Totens</h2>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border border-[oklch(1_0_0_/_0.05)] hover:bg-secondary hover:border-[oklch(1_0_0_/_0.05)]"
                 >
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Stack 
-                        direction="row" 
-                        spacing={2} 
-                        alignItems="center"
-                        sx={{ 
-                          height: '100%',
-                          '& .MuiChip-root': {
-                            height: '24px',  // Altura fixa para o chip
-                            alignSelf: 'center'  // Alinha verticalmente
-                          }
-                        }}
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Novo Totem
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="card-subtle bg-card border-0 sm:max-w-[425px]">
+                <DialogHeader className="space-y-3 pb-2">
+                  <DialogTitle className="text-xl font-medium">
+                    Adicionar novo totem
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Configure as informações básicas do totem
+                  </p>
+                </DialogHeader>
+
+                <form onSubmit={handleCreateTotem} className="space-y-6 pt-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="nome">
+                        Nome do totem
+                      </label>
+                      <Input
+                        id="nome"
+                        placeholder="Ex: Totem do Hall"
+                        value={novoTotem.nome}
+                        onChange={(e) => setNovoTotem({...novoTotem, nome: e.target.value})}
+                        className="bg-background border border-[oklch(1_0_0_/_0.05)] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[oklch(1_0_0_/_0.1)]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="tipo">
+                        Tipo de exibição
+                      </label>
+                      <Select
+                        value={novoTotem.tipo}
+                        onValueChange={(value) => setNovoTotem({...novoTotem, tipo: value as 'tv' | 'vertical'})}
                       >
-                        <Typography 
-                          variant="h6" 
-                          component="h2"
-                          sx={{
-                            fontSize: '1rem',
-                            lineHeight: '24px',  // Mesma altura do chip
-                            margin: 0
-                          }}
+                        <SelectTrigger 
+                          id="tipo"
+                          className="bg-background border border-[oklch(1_0_0_/_0.05)] focus:ring-0 focus:ring-offset-0 focus:border-[oklch(1_0_0_/_0.1)]"
                         >
-                          {totem.nome}
-                        </Typography>
-                        <Chip
-                          label={totem.tipo === 'tv' ? 'TV Horizontal' : 'Totem Vertical'}
-                          size="small"
-                          sx={{
-                            backgroundColor: 'transparent',
-                            '& .MuiChip-label': {
-                              color: colors.white.secondary,
-                              fontSize: '0.875rem',
-                              lineHeight: '20px'
-                            }
-                          }}
-                        />
-                      </Stack>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => setShowDeleteConfirm(totem.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                    <Divider sx={{ mb: 2 }} />
-                    <CardActions sx={{ 
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1.5,
-                      p: 2,
-                      '& .MuiButton-root': {
-                        width: '100%',
-                        height: '48px',
-                        justifyContent: 'flex-start',
-                        pl: 2,
-                        pr: 2,
-                        borderRadius: 1.5,
-                        '& .MuiSvgIcon-root': {
-                          mr: 1.5,
-                          fontSize: '20px'
-                        }
-                      },
-                      '& > :not(style) ~ :not(style)': {
-                        marginLeft: 0
-                      }
-                    }}>
-                      <Button
-                        component={Link}
-                        href={`/painel/totem/${totem.id}`}
-                        variant="contained"
-                        startIcon={<EditIcon />}
-                      >
-                        Gerenciar Cronograma
-                      </Button>
-                      <Button
-                        component={Link}
-                        href={`/totem/${totem.id}`}
-                        target="_blank"
-                        variant="outlined"
-                        startIcon={<VisibilityIcon />}
-                      >
-                        Visualizar Totem
-                      </Button>
-                    </CardActions>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          )}
-        </Container>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-[oklch(1_0_0_/_0.05)]">
+                          <SelectItem value="tv">TV Horizontal</SelectItem>
+                          <SelectItem value="vertical">Totem Vertical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-        {/* Modal de Criação */}
-        <Dialog 
-          open={showForm} 
-          onClose={() => setShowForm(false)} 
-          maxWidth="sm" 
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: '#000000',
-              border: `1px solid ${colors.gray.medium}`,
-              borderRadius: 1,
-              color: colors.white.main,
-              '& .MuiDialogTitle-root': {
-                color: colors.white.main,
-                bgcolor: '#000000', // Forçando preto no título
-                borderBottom: `1px solid ${colors.gray.medium}` // Opcional: adiciona uma linha divisória
-              },
-              '& .MuiDialogContent-root': {
-                bgcolor: '#000000',
-                padding: '20px' // Ajustando o padding para melhor espaçamento
-              },
-              '& .MuiDialogActions-root': {
-                bgcolor: '#000000', // Forçando preto na área de ações
-                padding: '20px', // Ajustando o padding
-                paddingTop: '0px'
-              },
-              '& .MuiInputLabel-root': {
-                color: colors.white.secondary
-              },
-              '& .MuiOutlinedInput-root': {
-                bgcolor: '#000000',
-                '& fieldset': {
-                  borderColor: colors.gray.medium
-                },
-                '&:hover fieldset': {
-                  borderColor: colors.white.main
-                }
-              },
-              '& .MuiSelect-select': {
-                color: colors.white.main
-              },
-              '& .MuiMenuItem-root': {
-                color: colors.white.main,
-                '&:hover': {
-                  bgcolor: colors.gray.light
-                }
-              }
-            }
-          }}
-        >
-          <DialogTitle>Criar Novo Totem</DialogTitle>
-          <form onSubmit={handleSubmit}>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Nome do Totem"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={novoTotem.nome}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setNovoTotem({...novoTotem, nome: e.target.value})}
-                sx={{
-                  '& .MuiInputBase-input': {
-                    color: colors.white.main
-                  }
-                }}
-              />
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Tipo do Totem</InputLabel>
-                <Select
-                  value={novoTotem.tipo}
-                  label="Tipo do Totem"
-                  onChange={(e: SelectChangeEvent) => 
-                    setNovoTotem({...novoTotem, tipo: e.target.value as 'tv' | 'vertical'})}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        bgcolor: '#000000',
-                        border: `1px solid ${colors.gray.medium}`,
-                        '& .MuiMenuItem-root': {
-                          color: colors.white.main,
-                          '&:hover': {
-                            bgcolor: colors.gray.light
-                          },
-                          '&.Mui-selected': {
-                            bgcolor: colors.gray.medium
-                          }
-                        }
-                      }
-                    }
-                  }}
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="border border-[oklch(1_0_0_/_0.05)] hover:bg-secondary hover:border-[oklch(1_0_0_/_0.05)]"
+                    >
+                      Criar Totem
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {totens.map((totem) => (
+              <Card key={totem.id} className="card-subtle bg-card relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-3 right-3 h-8 w-8 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => handleDeleteTotem(totem.id)}
                 >
-                  <MenuItem value="tv">TV Horizontal</MenuItem>
-                  <MenuItem value="vertical">Totem Vertical</MenuItem>
-                </Select>
-              </FormControl>
-            </DialogContent>
-            <DialogActions sx={{ p: 2, pt: 0 }}>
-              <Button 
-                onClick={() => setShowForm(false)}
-                variant="outlined"
-                sx={{
-                  borderColor: colors.gray.medium,
-                  color: colors.white.main,
-                  '&:hover': {
-                    borderColor: colors.white.main,
-                    bgcolor: 'transparent'
-                  }
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                variant="contained"
-                sx={{
-                  bgcolor: colors.white.main,
-                  color: colors.black.pure,
-                  '&:hover': {
-                    bgcolor: colors.white.dim
-                  }
-                }}
-              >
-                Criar
-              </Button>
-            </DialogActions>
-          </form>
-        </Dialog>
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
 
-        {/* Modal de Confirmação de Exclusão */}
-        <Dialog
-          open={!!showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(null)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Excluir Totem</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Tem certeza que deseja excluir este totem? Esta ação não pode ser desfeita.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions sx={{ p: 2, pt: 0 }}>
-            <Button 
-              onClick={() => setShowDeleteConfirm(null)}
-              variant="outlined"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
-              color="error"
-              variant="contained"
-            >
-              Excluir
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg font-medium">
+                    {totem.tipo === 'tv' ? (
+                      <MonitorIcon className="h-5 w-5" />
+                    ) : (
+                      <SmartphoneIcon className="h-5 w-5" />
+                    )}
+                    {totem.nome}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tipo: {totem.tipo === 'tv' ? 'TV Horizontal' : 'Totem Vertical'}
+                  </p>
+                  <div className="flex justify-between gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1 bg-[hsl(var(--card-lighter))] hover:bg-[hsl(var(--card-lighter))/80]"
+                      onClick={() => router.push(ROUTES.TOTEM_ADMIN(totem.id))}
+                    >
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      Gerenciar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border border-[oklch(1_0_0_/_0.05)] hover:bg-secondary hover:border-[oklch(1_0_0_/_0.05)]"
+                      onClick={() => router.push(ROUTES.TOTEM(totem.id))}
+                    >
+                      <EyeIcon className="mr-2 h-4 w-4" />
+                      Visualizar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
     </ProtectedRoute>
   );
 } 

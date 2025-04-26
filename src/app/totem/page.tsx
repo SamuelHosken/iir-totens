@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { Box } from '@mui/material';
 import { LoadingScreen } from '@/components/feedback/LoadingScreen';
 
 interface TotemData {
@@ -63,18 +62,9 @@ function TotemContent() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#000000'
-        }}
-      >
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
         <LoadingScreen />
-      </Box>
+      </div>
     );
   }
 

@@ -1,13 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Compilação de pacotes MUI e Emotion
-  transpilePackages: [
-    '@mui/material',
-    '@mui/icons-material',
-    '@emotion/react',
-    '@emotion/styled'
-  ],
-
   // Modo estrito do React
   reactStrictMode: true,
 
@@ -22,11 +14,6 @@ const nextConfig = {
   // Configurações do ESLint
   eslint: {
     ignoreDuringBuilds: true
-  },
-
-  // Configurações de compilação
-  compiler: {
-    emotion: true
   },
 
   // Headers de segurança

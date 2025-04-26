@@ -1,145 +1,80 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Container, Typography, Divider } from '@mui/material';
-import { Google as GoogleIcon } from '@mui/icons-material';
-import { colors } from '@/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { ROUTES } from '@/constants';
 import Image from 'next/image';
+
+// Shadcn Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Icons
+import { Chrome } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
-  const [error, setError] = useState('');
-  const [isClient, setIsClient] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (user) {
+      router.push(ROUTES.PAINEL);
+    }
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      router.push('/painel');
+      router.push(ROUTES.PAINEL);
     } catch (error) {
-      setError('Erro ao fazer login. Tente novamente.');
+      console.error('Erro ao fazer login:', error);
     }
   };
 
-  if (!isClient) {
-    return null;
-  }
-
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: '#000000',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
-      <Container maxWidth="sm">
-        <Box
-          sx={{
-            bgcolor: '#000000',
-            border: `1px solid ${colors.gray.medium}`,
-            borderRadius: 2,
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              width: '100%'
-            }}
-          >
-            <Box sx={{ width: '40px', height: '40px', position: 'relative', flexShrink: 0 }}>
-              <Image
-                src="/IIR Brasil Logo Branca.png"
-                alt="IIR Brasil Logo"
-                fill
-                style={{ objectFit: 'contain' }}
-                priority
-              />
-            </Box>
-            <Typography 
-              variant="h5" 
-              component="h1"
-              sx={{ 
-                color: colors.white.main,
-                fontWeight: 500,
-                fontSize: '1.25rem'
-              }}
-            >
-              Sistema de Totens
-            </Typography>
-          </Box>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <Card className="card-subtle bg-card w-full max-w-sm">
+        <CardHeader className="space-y-4 text-left px-8 pt-8">
+          <div className="flex items-center">
+            <Image
+              src="/IIR Brasil Logo Branca.png"
+              alt="IIR Brasil"
+              width={60}
+              height={20}
+              className="h-auto"
+              priority
+            />
+          </div>
+          <div className="space-y-1.5">
+            <CardTitle className="text-2xl font-medium">
+              Bem-vindo de volta
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Faça login para acessar o painel
+            </p>
+          </div>
+        </CardHeader>
 
-          <Divider 
-            sx={{ 
-              borderColor: colors.gray.medium,
-              width: '100%',
-              my: 1
-            }} 
-          />
-
-          <Typography 
-            variant="body2"
-            sx={{ 
-              color: colors.white.secondary,
-              textAlign: 'left',
-              fontSize: '0.875rem',
-              lineHeight: 1.5,
-            }}
-          >
+        <CardContent className="space-y-6 px-8 pb-8">
+          <p className="text-sm text-muted-foreground">
             Faça login com sua conta Google para acessar o sistema de gerenciamento de totens da Igreja Internacional da Reconciliação - IIR.
-          </Typography>
+          </p>
 
           <Button
+            variant="outline"
+            size="lg"
+            className="w-full border border-[oklch(1_0_0_/_0.05)] hover:bg-secondary hover:border-[oklch(1_0_0_/_0.05)]"
             onClick={handleGoogleLogin}
-            variant="outlined"
-            size="large"
-            startIcon={<GoogleIcon />}
-            fullWidth
-            sx={{
-              borderColor: colors.gray.medium,
-              color: colors.white.main,
-              py: 1.5,
-              fontSize: '0.9rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              mt: 1,
-              '&:hover': {
-                borderColor: colors.white.main,
-                bgcolor: 'transparent'
-              }
-            }}
           >
-            Entrar com Google
+            <Chrome className="mr-2 h-5 w-5" />
+            Continuar com Google
           </Button>
-
-          {error && (
-            <Typography 
-              color="error" 
-              variant="body2" 
-              sx={{ 
-                textAlign: 'center' 
-              }}
-            >
-              {error}
-            </Typography>
-          )}
-        </Box>
-      </Container>
-    </Box>
+        </CardContent>
+      </Card>
+    </div>
   );
 } 

@@ -6,11 +6,18 @@ export interface Slide {
   ordem: number;
 }
 
+export interface Layout {
+  id: string;
+  nome: string;
+  ativo: boolean;
+  cronograma: Cronograma[];
+}
+
 export interface Totem {
   id: string;
   nome: string;
   tipo: 'tv' | 'vertical';
-  cronograma: Slide[];
+  layouts: Layout[];
 }
 
 export interface TotemFormData {
@@ -22,4 +29,13 @@ export interface SlideFormData {
   titulo: string;
   horarioInicio: string;
   conteudo: string;
+}
+
+export interface Cronograma {
+  id: string;
+  nome: string;
+  horarioInicio: string;
+  descricao: string;
+  cor?: 'purple' | 'green' | 'cyan' | 'pink' | 'orange';
+  destaque?: boolean;
 } 
