@@ -1,6 +1,6 @@
 import { LayoutProps } from '@/types/layouts';
 import Image from 'next/image';
-import labLogo from '@/public/Lablogo.png';
+import labLogo from '../../../public/Lablogo.png';
 
 interface Slide {
   id: string;
@@ -108,7 +108,7 @@ export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLa
             {/* Header com Logo */}
             <div className="flex justify-center mb-8">
               <Image
-                src={labLogo}
+                src="/Lablogo.png"
                 alt="Lab Camp"
                 width={200}
                 height={80}
