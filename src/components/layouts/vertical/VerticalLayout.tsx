@@ -107,7 +107,7 @@ export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLa
             {/* Header com Logo */}
             <div className="flex justify-center mb-8">
               <Image
-                src="/images/LabLogo.png"
+                src="/logo_001.png"
                 alt="Lab Camp"
                 width={200}
                 height={80}
