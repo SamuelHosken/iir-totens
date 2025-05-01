@@ -108,28 +108,45 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     slide.destaque && isEventoAtual(slide.horarioInicio)
   );
 
+  // Função para filtrar e ordenar os eventos que queremos mostrar
+  const getFilteredEvents = (cronograma: Slide[], currentIndex: number) => {
+    if (!cronograma?.length) return [];
+
+    // Pegamos 4 eventos antes (incluindo o atual)
+    const eventsBeforeCurrent = cronograma.slice(Math.max(0, currentIndex - 2), currentIndex + 1);
+    // E 5 eventos depois
+    const eventsAfterCurrent = cronograma.slice(currentIndex + 1, currentIndex + 6);
+
+    return [
+      ...eventsBeforeCurrent,
+      ...eventsAfterCurrent
+    ].filter(Boolean);
+  };
+
   if (alertEvent) {
     return (
-      <div className="fixed inset-0">
-        {/* Background pulsante */}
-        <div className="absolute inset-0 bg-red-600 animate-alert-pulse" />
-        
-        {/* Conteúdo com efeitos */}
-        <div className="relative z-10 h-full flex flex-col items-center justify-center">
-          <div className="text-center text-white p-8">
-            {/* Relógio pulsante */}
-            <div className="text-9xl font-bold mb-12 animate-bounce">
-              {alertEvent.horarioInicio}
-            </div>
-            
-            {/* Título com glow */}
-            <div className="text-7xl font-bold mb-8 animate-glow">
-              {alertEvent.titulo}
-            </div>
-            
-            {/* Descrição com fade */}
-            <div className="text-5xl opacity-90 animate-fade-in">
-              {alertEvent.conteudo}
+      <div className="min-h-screen w-screen bg-black flex items-center">
+        <div className="h-[700px] w-[168px] relative -mt-[50px]">
+          {/* Background pulsante */}
+          <div className="absolute inset-0 bg-red-600 animate-alert-pulse-intense" />
+          
+          {/* Conteúdo com efeitos - Ajustado verticalmente */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full pl-[-30px] -translate-y-[100px] text-center">
+              {/* Relógio pulsante */}
+              <div className="text-5xl font-bold mb-8 text-white animate-bounce">
+                {alertEvent.horarioInicio}
+              </div>
+              
+              {/* Título com glow */}
+              <div className="text-3xl font-bold mb-6 text-white animate-glow mx-auto">
+                {alertEvent.titulo}
+              </div>
+              
+              {/* Descrição com fade */}
+              <div className="text-lg text-white opacity-90 animate-fade-in px-2 mx-auto">
+                {alertEvent.conteudo}
+              </div>
             </div>
           </div>
         </div>
@@ -138,34 +155,26 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
   }
 
   return (
-    <div className="min-h-screen w-screen bg-black text-white overflow-hidden">
-      {/* Container principal com borda */}
-      <div className={`
-        w-full h-full min-h-screen
-        border-[16px] 
-        ${borderColorClass}
-        relative
-      `}>
-        {/* Container interno com cantos arredondados */}
-        <div className="absolute inset-0 rounded-[2rem] bg-black overflow-hidden">
-          {/* Conteúdo */}
-          <div className="relative z-10 h-full flex flex-col p-4">
-            {/* Header com Logo */}
-            <div className="flex justify-center mb-8">
+    <div className="min-h-screen w-screen bg-black flex items-center justify-start">
+      <div className="h-[1000px] w-[168px] bg-black relative text-white">
+        <div className="absolute inset-0 rounded-r-[2rem] bg-black overflow-hidden">
+          <div className="relative z-10 h-full flex flex-col p-2">
+            {/* Logo menor */}
+            <div className="flex justify-center mb-3">
               <Image
                 src="/logo_001.png"
                 alt="Lab Camp"
-                width={200}
-                height={80}
+                width={60}
+                height={24}
                 priority
                 className="h-auto"
               />
             </div>
 
-            {/* Horário Atual */}
-            <div className="text-center mb-8">
-              <div className="inline-block bg-green-500/20 px-4 py-1.5 rounded-full border border-green-500/30">
-                <div className="text-2xl font-light text-green-300">
+            {/* Horário menor */}
+            <div className="text-center mb-4">
+              <div className="inline-block bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/30">
+                <div className="text-sm font-light text-green-300">
                   {localTime?.toLocaleTimeString('pt-BR', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
@@ -174,48 +183,47 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
               </div>
             </div>
 
-            {/* Lista de Eventos */}
-            <div className="flex-1 flex flex-col gap-4 max-w-3xl mx-auto w-full">
-              {sortedCronograma?.map((slide, index) => {
-                const isAtual = index === currentEventIndex;
-                const isPassado = isPast(slide.horarioInicio);
+            {/* Lista de Eventos com textos menores */}
+            <div className="flex-1 flex flex-col gap-2 w-full">
+              {sortedCronograma && currentEventIndex !== -1 && getFilteredEvents(sortedCronograma, currentEventIndex).map((slide, index, array) => {
+                const isAtual = index === 2; // O terceiro item será o atual (após 2 anteriores)
+                const isPassado = index < 2; // Os dois primeiros são passados
                 const corBase = eventColors[slide.cor || 'purple']?.bg || 'bg-purple-500';
 
                 return (
                   <div
                     key={slide.id}
                     className={`
-                      rounded-xl p-6 transition-all duration-300
+                      rounded-xl p-2 transition-all duration-300
                       ${isAtual ? `${corBase} scale-105 shadow-xl` : 
                         isPassado ? `${corBase} opacity-30` : `${corBase} opacity-70`}
-                      ${isAtual ? 'text-center' : ''}
                     `}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="text-left">
-                        <h2 className={`font-bold ${isAtual ? 'text-3xl mb-2' : 'text-2xl'}`}>
+                    <div className={`flex ${isAtual ? 'flex-col' : 'justify-between items-start gap-1'}`}>
+                      <div className="text-left flex-1">
+                        <h2 className={`font-bold ${isAtual ? 'text-base' : 'text-xs'}`}>
                           {slide.titulo}
                         </h2>
                         {isAtual && (
-                          <p className="text-xl mt-2 text-left">
-                            {slide.conteudo}
-                          </p>
+                          <>
+                            <p className="text-sm font-semibold mt-1.5">
+                              {slide.horarioInicio}
+                            </p>
+                            <p className="text-xs mt-2 leading-tight opacity-90">
+                              {slide.conteudo}
+                            </p>
+                          </>
                         )}
                       </div>
-                      <p className={`${isAtual ? 'text-2xl' : 'text-xl'} font-semibold`}>
-                        {slide.horarioInicio}
-                      </p>
+                      {!isAtual && (
+                        <p className="text-[10px] font-semibold">
+                          {slide.horarioInicio}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            {/* Footer com Nome do Totem */}
-            <div className="text-center mt-8">
-              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                {totem?.nome}
-              </h1>
             </div>
           </div>
         </div>
