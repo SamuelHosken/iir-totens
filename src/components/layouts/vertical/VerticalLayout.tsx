@@ -134,17 +134,17 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
           <div className="absolute inset-0 flex items-center">
             <div className="w-full pl-[-30px] -translate-y-[100px] text-center">
               {/* Relógio pulsante */}
-              <div className="text-5xl font-bold mb-8 text-white animate-bounce">
+              <div className="text-4xl font-bold mb-6 text-white animate-bounce">
                 {alertEvent.horarioInicio}
               </div>
               
               {/* Título com glow */}
-              <div className="text-3xl font-bold mb-6 text-white animate-glow mx-auto">
+              <div className="text-2xl font-bold mb-4 text-white animate-glow mx-auto">
                 {alertEvent.titulo}
               </div>
               
               {/* Descrição com fade */}
-              <div className="text-lg text-white opacity-90 animate-fade-in px-2 mx-auto">
+              <div className="text-base text-white opacity-90 animate-fade-in px-2 mx-auto">
                 {alertEvent.conteudo}
               </div>
             </div>
@@ -156,7 +156,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
 
   return (
     <div className="min-h-screen w-screen bg-black flex items-center justify-start">
-      <div className="h-[1000px] w-[140px] bg-black relative text-white">
+      <div className="h-[1000px] w-[135px] bg-black relative text-white">
         <div className="absolute inset-0 rounded-r-[2rem] bg-black overflow-hidden">
           <div className="relative z-10 h-full flex flex-col p-2">
             {/* Logo menor */}
@@ -174,7 +174,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
             {/* Horário menor */}
             <div className="text-center mb-4">
               <div className="inline-block bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/30">
-                <div className="text-sm font-light text-green-300">
+                <div className="text-xs font-light text-green-300">
                   {localTime?.toLocaleTimeString('pt-BR', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
@@ -201,22 +201,22 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
                   >
                     <div className={`flex ${isAtual ? 'flex-col' : 'justify-between items-start gap-1'}`}>
                       <div className="text-left flex-1">
-                        <h2 className={`font-bold ${isAtual ? 'text-base' : 'text-xs'}`}>
+                        <h2 className={`font-bold ${isAtual ? 'text-sm' : 'text-[10px]'}`}>
                           {slide.titulo}
                         </h2>
                         {isAtual && (
                           <>
-                            <p className="text-sm font-semibold mt-1.5">
+                            <p className="text-xs font-semibold mt-1">
                               {slide.horarioInicio}
                             </p>
-                            <p className="text-xs mt-2 leading-tight opacity-90">
+                            <p className="text-[10px] mt-1.5 leading-tight opacity-90">
                               {slide.conteudo}
                             </p>
                           </>
                         )}
                       </div>
                       {!isAtual && (
-                        <p className="text-[10px] font-semibold">
+                        <p className="text-[8px] font-semibold">
                           {slide.horarioInicio}
                         </p>
                       )}
