@@ -28,7 +28,7 @@ interface NovoEvento {
   nome: string;
   descricao: string;
   horarioInicio: string;
-  cor?: EventColor;
+  cor: 'purple' | 'green' | 'cyan' | 'pink' | 'orange';
 }
 
 export default function LayoutCronograma({ 
@@ -43,7 +43,8 @@ export default function LayoutCronograma({
   const [novoEvento, setNovoEvento] = useState<NovoEvento>({
     nome: '',
     descricao: '',
-    horarioInicio: ''
+    horarioInicio: '',
+    cor: 'purple'
   });
   const [eventoEditando, setEventoEditando] = useState<Cronograma | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -55,12 +56,19 @@ export default function LayoutCronograma({
     if (!totem || !layout) return;
 
     try {
+      // Validar campos obrigatórios
+      if (!novoEvento.nome || !novoEvento.horarioInicio || !novoEvento.descricao) {
+        alert('Por favor, preencha todos os campos obrigatórios');
+        return;
+      }
+
       const newEvento: Cronograma = {
         id: nanoid(),
         nome: novoEvento.nome,
         descricao: novoEvento.descricao,
         horarioInicio: novoEvento.horarioInicio,
-        cor: novoEvento.cor as EventColor | undefined
+        cor: novoEvento.cor || 'purple', // Valor padrão se não for selecionado
+        destaque: false // Valor inicial do destaque
       };
 
       const updatedLayouts = totem.layouts.map(l => {
@@ -82,15 +90,17 @@ export default function LayoutCronograma({
         layouts: updatedLayouts
       }, false);
 
+      // Limpar o formulário
       setNovoEvento({ 
         nome: '',
         descricao: '',
         horarioInicio: '',
-        cor: undefined
+        cor: 'purple'
       });
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Erro ao criar evento:', error);
+      alert('Erro ao criar evento. Por favor, tente novamente.');
     }
   };
 
@@ -157,6 +167,33 @@ export default function LayoutCronograma({
       }, false);
     } catch (error) {
       console.error('Erro ao atualizar destaque:', error);
+    }
+  };
+
+  const handleDeleteEvento = async (eventoId: string) => {
+    if (!totem || !layout) return;
+
+    try {
+      const updatedLayouts = totem.layouts.map(l => {
+        if (l.id === layoutId) {
+          return {
+            ...l,
+            cronograma: l.cronograma.filter(evento => evento.id !== eventoId)
+          };
+        }
+        return l;
+      });
+
+      await updateDoc(doc(db, 'totens', id), {
+        layouts: updatedLayouts
+      });
+
+      mutate({
+        ...totem,
+        layouts: updatedLayouts
+      }, false);
+    } catch (error) {
+      console.error('Erro ao deletar evento:', error);
     }
   };
 
@@ -308,10 +345,11 @@ export default function LayoutCronograma({
                       size="icon"
                       className={`h-8 w-8 ${
                         evento.destaque 
-                          ? 'text-yellow-500 bg-yellow-500/10' 
-                          : 'text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10'
+                          ? 'text-red-500 bg-red-500/10' 
+                          : 'text-muted-foreground hover:text-red-500 hover:bg-red-500/10'
                       }`}
                       onClick={() => handleToggleDestaque(evento)}
+                      title={evento.destaque ? "Desativar modo alerta" : "Ativar modo alerta"}
                     >
                       <AlertCircle className="h-4 w-4" />
                     </Button>
@@ -319,6 +357,7 @@ export default function LayoutCronograma({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteEvento(evento.id)}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>

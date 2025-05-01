@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Totem } from '@/types';
 import { ROUTES } from '@/constants';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 
 // Icons
-import { MonitorIcon, SmartphoneIcon, PlusIcon, TrashIcon, SettingsIcon, LogOutIcon, EyeIcon } from 'lucide-react';
+import { MonitorIcon, SmartphoneIcon, PlusIcon, TrashIcon, SettingsIcon, LogOutIcon, EyeIcon, BellRing, BellOff } from 'lucide-react';
 
 export default function Painel() {
   const [totens, setTotens] = useState<Totem[]>([]);
@@ -25,6 +25,7 @@ export default function Painel() {
   const [novoTotem, setNovoTotem] = useState({ nome: '', tipo: 'tv' });
   const router = useRouter();
   const { signOut } = useAuth();
+  const [alertMode, setAlertMode] = useState(false);
 
   useEffect(() => {
     fetchTotens();
@@ -62,6 +63,60 @@ export default function Painel() {
     } catch (error) {
       console.error('Erro ao deletar totem:', error);
     }
+  };
+
+  const handleToggleAlertMode = async (totemId: string) => {
+    try {
+      const totemRef = doc(db, 'totens', totemId);
+      const totem = totens.find(t => t.id === totemId);
+      
+      if (!totem?.layouts) return;
+
+      const updatedLayouts = totem.layouts.map(l => {
+        if (l.ativo) {
+          // Encontrar o evento atual
+          const now = new Date();
+          const currentEvent = l.cronograma.find(evento => {
+            const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
+            const eventoTime = new Date();
+            eventoTime.setHours(hora, minuto, 0, 0);
+            const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
+            return diffMinutes >= 0 && diffMinutes <= 2;
+          });
+
+          if (currentEvent) {
+            return {
+              ...l,
+              cronograma: l.cronograma.map(evento => 
+                evento.id === currentEvent.id
+                  ? { ...evento, destaque: !alertMode }
+                  : evento
+              )
+            };
+          }
+        }
+        return l;
+      });
+
+      await updateDoc(totemRef, {
+        layouts: updatedLayouts
+      });
+
+      setAlertMode(!alertMode);
+      fetchTotens();
+    } catch (error) {
+      console.error('Erro ao alterar modo de alerta:', error);
+    }
+  };
+
+  const isEventoAtual = (evento: any) => {
+    const now = new Date();
+    const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
+    const eventoTime = new Date();
+    eventoTime.setHours(hora, minuto, 0, 0);
+    
+    const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
+    return diffMinutes >= 0 && diffMinutes <= 2; // Evento atual (últimos 2 minutos)
   };
 
   return (
@@ -206,6 +261,28 @@ export default function Painel() {
                     >
                       <EyeIcon className="mr-2 h-4 w-4" />
                       Visualizar
+                    </Button>
+                    <Button
+                      variant={alertMode ? "destructive" : "outline"}
+                      size="sm"
+                      className={`flex-1 ${
+                        alertMode 
+                          ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                          : 'border border-[oklch(1_0_0_/_0.05)] hover:bg-secondary hover:border-[oklch(1_0_0_/_0.05)]'
+                      }`}
+                      onClick={() => handleToggleAlertMode(totem.id)}
+                    >
+                      {alertMode ? (
+                        <>
+                          <BellOff className="mr-2 h-4 w-4" />
+                          Desativar Alerta
+                        </>
+                      ) : (
+                        <>
+                          <BellRing className="mr-2 h-4 w-4" />
+                          Ativar Alerta
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>

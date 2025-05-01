@@ -24,7 +24,7 @@ export default function TotemView({ params }: { params: Promise<{ id: string }> 
   const resolvedParams = use(params);
   const [totem, setTotem] = useState<TotemType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [localTime, setLocalTime] = useState(new Date());
 
   // Listener em tempo real para mudanças no totem
   useEffect(() => {
@@ -44,93 +44,46 @@ export default function TotemView({ params }: { params: Promise<{ id: string }> 
       }
     );
 
-    // Cleanup: remove o listener quando o componente for desmontado
     return () => unsubscribe();
   }, [resolvedParams.id]);
 
   // Atualização do relógio
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
+      setLocalTime(new Date());
+    }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
-  const isEventoAtual = (horarioInicio: string) => {
-    if (!currentTime) return false;
-    
-    const [hora, minuto] = horarioInicio.split(':').map(Number);
-    const eventoTime = new Date();
-    const now = new Date();
-    
-    // Configura a data do evento para hoje
-    eventoTime.setHours(hora, minuto, 0, 0);
-    
-    // Encontra a diferença em minutos
-    const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
-    
-    // Retorna true se o evento aconteceu nos últimos 30 minutos
-    return diffMinutes >= 0 && diffMinutes <= 30;
-  };
+  if (loading) return <LoadingScreen />;
+  if (!totem) return <div>Totem não encontrado</div>;
 
-  // Função para encontrar o evento mais recente
-  const findMostRecentEvent = (cronograma: LayoutTotem['cronograma']) => {
-    const now = new Date();
-    let mostRecentEvent = -1;
-    let smallestDiff = Infinity;
+  const activeLayout = totem.layouts?.find(l => l.ativo);
+  if (!activeLayout) return <div>Layout não encontrado</div>;
 
-    cronograma.forEach((evento, index) => {
-      const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
-      const eventoTime = new Date();
-      eventoTime.setHours(hora, minuto, 0, 0);
-
-      const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
-      
-      // Só considera eventos que já aconteceram (diff positivo)
-      if (diffMinutes >= 0 && diffMinutes < smallestDiff) {
-        smallestDiff = diffMinutes;
-        mostRecentEvent = index;
-      }
-    });
-
-    return mostRecentEvent;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingScreen />
-      </div>
-    );
-  }
-
-  if (!totem) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-destructive">
-          Totem não encontrado
-        </div>
-      </div>
-    );
-  }
-
-  const layoutTotem: LayoutTotem = {
+  const layoutTotem = {
     nome: totem.nome,
-    cronograma: totem.layouts?.find(l => l.ativo)?.cronograma.map(evento => ({
+    cronograma: activeLayout.cronograma.map(evento => ({
       id: evento.id,
       titulo: evento.nome,
       horarioInicio: evento.horarioInicio,
       conteudo: evento.descricao,
-      cor: evento.cor
-    })) || []
+      cor: evento.cor,
+      destaque: evento.destaque
+    }))
   };
 
   const layoutProps = {
     totem: layoutTotem,
-    currentTime,
-    isEventoAtual,
-    findMostRecentEvent
+    currentTime: localTime,
+    isEventoAtual: (horarioInicio: string) => {
+      const [hora, minuto] = horarioInicio.split(':').map(Number);
+      const eventoTime = new Date();
+      eventoTime.setHours(hora, minuto, 0, 0);
+      const diffMinutes = Math.floor((localTime.getTime() - eventoTime.getTime()) / (1000 * 60));
+      return diffMinutes >= 0 && diffMinutes <= 2;
+    }
   };
 
   return (

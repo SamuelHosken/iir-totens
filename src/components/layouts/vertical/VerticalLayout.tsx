@@ -1,5 +1,6 @@
 import { LayoutProps } from '@/types/layouts';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 interface Slide {
   id: string;
@@ -44,7 +45,18 @@ const eventColors = {
   }
 } as const;
 
-export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLayoutProps) {
+export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual }: VerticalLayoutProps) {
+  const [localTime, setLocalTime] = useState<Date | null>(initialTime);
+
+  // Atualizar o relógio a cada segundo
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLocalTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const isPast = (horarioInicio: string) => {
     const [hora, minuto] = horarioInicio.split(':').map(Number);
     const eventoTime = new Date();
@@ -91,6 +103,40 @@ export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLa
   const currentColor = currentEvent?.cor || 'purple';
   const borderColorClass = eventColors[currentColor]?.border || 'border-purple-500';
 
+  // Encontrar evento atual com destaque ativo
+  const alertEvent = sortedCronograma?.find(slide => 
+    slide.destaque && isEventoAtual(slide.horarioInicio)
+  );
+
+  if (alertEvent) {
+    return (
+      <div className="fixed inset-0">
+        {/* Background pulsante */}
+        <div className="absolute inset-0 bg-red-600 animate-alert-pulse" />
+        
+        {/* Conteúdo com efeitos */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center">
+          <div className="text-center text-white p-8">
+            {/* Relógio pulsante */}
+            <div className="text-9xl font-bold mb-12 animate-bounce">
+              {alertEvent.horarioInicio}
+            </div>
+            
+            {/* Título com glow */}
+            <div className="text-7xl font-bold mb-8 animate-glow">
+              {alertEvent.titulo}
+            </div>
+            
+            {/* Descrição com fade */}
+            <div className="text-5xl opacity-90 animate-fade-in">
+              {alertEvent.conteudo}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-screen bg-black text-white overflow-hidden">
       {/* Container principal com borda */}
@@ -120,7 +166,7 @@ export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLa
             <div className="text-center mb-8">
               <div className="inline-block bg-green-500/20 px-4 py-1.5 rounded-full border border-green-500/30">
                 <div className="text-2xl font-light text-green-300">
-                  {currentTime?.toLocaleTimeString('pt-BR', { 
+                  {localTime?.toLocaleTimeString('pt-BR', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                   })}
@@ -143,7 +189,6 @@ export function VerticalLayout({ totem, currentTime, isEventoAtual }: VerticalLa
                       ${isAtual ? `${corBase} scale-105 shadow-xl` : 
                         isPassado ? `${corBase} opacity-30` : `${corBase} opacity-70`}
                       ${isAtual ? 'text-center' : ''}
-                      ${isAtual && slide.destaque ? 'animate-pulse ring-4 ring-yellow-400' : ''}
                     `}
                   >
                     <div className="flex justify-between items-center">
