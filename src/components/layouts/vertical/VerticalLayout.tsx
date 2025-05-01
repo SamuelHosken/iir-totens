@@ -126,7 +126,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
   if (alertEvent) {
     return (
       <div className="min-h-screen w-screen bg-black flex items-center">
-        <div className="h-[700px] w-[168px] relative -mt-[50px]">
+        <div className="h-[700px] w-[140px] relative -mt-[50px]">
           {/* Background pulsante */}
           <div className="absolute inset-0 bg-red-600 animate-alert-pulse-intense" />
           
