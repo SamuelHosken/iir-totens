@@ -88,11 +88,21 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     return mostRecentEvent;
   };
 
+  // Função para converter horário em minutos, considerando horários após meia-noite
+  const convertToMinutes = (hora: number, minuto: number) => {
+    // Se o horário for entre meia-noite e 3am, adiciona 24h
+    if (hora >= 0 && hora <= 3) {
+      return ((hora + 24) * 60) + minuto;
+    }
+    return (hora * 60) + minuto;
+  };
+
   // Função para ordenar eventos por horário
   const sortedCronograma = totem?.cronograma.sort((a, b) => {
     const [horaA, minA] = a.horarioInicio.split(':').map(Number);
     const [horaB, minB] = b.horarioInicio.split(':').map(Number);
-    return (horaA * 60 + minA) - (horaB * 60 + minB);
+    
+    return convertToMinutes(horaA, minA) - convertToMinutes(horaB, minB);
   });
 
   // Encontra o evento mais recente
