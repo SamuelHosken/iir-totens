@@ -191,19 +191,21 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
                       ${isAtual ? 'text-center' : ''}
                     `}
                   >
-                    <div className="flex justify-between items-center">
-                      <h2 className={`font-bold ${isAtual ? 'text-3xl mb-2' : 'text-2xl'}`}>
-                        {slide.titulo}
-                      </h2>
+                    <div className="flex justify-between items-start">
+                      <div className="text-left">
+                        <h2 className={`font-bold ${isAtual ? 'text-3xl mb-2' : 'text-2xl'}`}>
+                          {slide.titulo}
+                        </h2>
+                        {isAtual && (
+                          <p className="text-xl mt-2 text-left">
+                            {slide.conteudo}
+                          </p>
+                        )}
+                      </div>
                       <p className={`${isAtual ? 'text-2xl' : 'text-xl'} font-semibold`}>
                         {slide.horarioInicio}
                       </p>
                     </div>
-                    {isAtual && (
-                      <p className="text-xl mt-2">
-                        {slide.conteudo}
-                      </p>
-                    )}
                   </div>
                 );
               })}
