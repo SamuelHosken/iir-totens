@@ -112,13 +112,25 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
   const getFilteredEvents = (cronograma: Slide[], currentIndex: number) => {
     if (!cronograma?.length) return [];
 
-    // Pegamos 4 eventos antes (incluindo o atual)
-    const eventsBeforeCurrent = cronograma.slice(Math.max(0, currentIndex - 2), currentIndex + 1);
+    // Encontra o índice do evento atual na lista filtrada
+    const currentEventPosition = Math.min(
+      cronograma.slice(0, currentIndex).length,
+      3  // máximo de 3 eventos anteriores
+    );
+
+    // Pega até 3 eventos antes do atual
+    const start = Math.max(0, currentIndex - 3);
+    const eventsBeforeCurrent = cronograma.slice(start, currentIndex);
+    
+    // Pega o evento atual
+    const currentEvent = cronograma[currentIndex];
+    
     // E 5 eventos depois
     const eventsAfterCurrent = cronograma.slice(currentIndex + 1, currentIndex + 6);
 
     return [
       ...eventsBeforeCurrent,
+      currentEvent,
       ...eventsAfterCurrent
     ].filter(Boolean);
   };
@@ -186,8 +198,13 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
             {/* Lista de Eventos com textos menores */}
             <div className="flex-1 flex flex-col gap-2 w-full">
               {sortedCronograma && currentEventIndex !== -1 && getFilteredEvents(sortedCronograma, currentEventIndex).map((slide, index, array) => {
-                const isAtual = index === 2; // O terceiro item será o atual (após 2 anteriores)
-                const isPassado = index < 2; // Os dois primeiros são passados
+                // isAtual será true para o evento que corresponde ao currentIndex
+                const currentEventPosition = Math.min(
+                  sortedCronograma.slice(0, currentEventIndex).length,
+                  3
+                );
+                const isAtual = index === currentEventPosition;
+                const isPassado = index < currentEventPosition;
                 const corBase = eventColors[slide.cor || 'purple']?.bg || 'bg-purple-500';
 
                 return (
@@ -201,15 +218,15 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
                   >
                     <div className={`flex ${isAtual ? 'flex-col' : 'justify-between items-start gap-1'}`}>
                       <div className="text-left flex-1">
-                        <h2 className={`font-bold ${isAtual ? 'text-sm' : 'text-[10px]'}`}>
+                        <h2 className={`font-bold ${isAtual ? 'text-[10px]' : 'text-[8px]'} break-words`}>
                           {slide.titulo}
                         </h2>
                         {isAtual && (
                           <>
-                            <p className="text-xs font-semibold mt-1">
+                            <p className="text-[9px] font-semibold mt-1">
                               {slide.horarioInicio}
                             </p>
-                            <p className="text-[10px] mt-1.5 leading-tight opacity-90">
+                            <p className="text-[8px] mt-1 leading-tight opacity-90 break-words">
                               {slide.conteudo}
                             </p>
                           </>
