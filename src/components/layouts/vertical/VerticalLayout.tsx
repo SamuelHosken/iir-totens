@@ -160,7 +160,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
         <div className="absolute inset-0 rounded-r-[2rem] bg-black overflow-hidden">
           <div className="relative z-10 h-full flex flex-col p-2">
             {/* Logo menor */}
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center mb-3 mt-[30px]">
               <Image
                 src="/logo_001.png"
                 alt="Lab Camp"
