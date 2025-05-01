@@ -138,7 +138,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
   if (alertEvent) {
     return (
       <div className="min-h-screen w-screen bg-black flex items-center">
-        <div className="h-[700px] w-[168px] relative -mt-[50px]">
+        <div className="h-[700px] w-[135px] relative -mt-[50px]">
           {/* Background pulsante */}
           <div className="absolute inset-0 bg-red-600 animate-alert-pulse-intense" />
           
@@ -146,17 +146,17 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
           <div className="absolute inset-0 flex items-center">
             <div className="w-full pl-[-30px] -translate-y-[100px] text-center">
               {/* Relógio pulsante */}
-              <div className="text-4xl font-bold mb-6 text-white animate-bounce">
+              <div className="text-3xl font-bold mb-4 text-white animate-bounce">
                 {alertEvent.horarioInicio}
               </div>
               
               {/* Título com glow */}
-              <div className="text-2xl font-bold mb-4 text-white animate-glow mx-auto">
+              <div className="text-xl font-bold mb-3 text-white animate-glow mx-auto px-2">
                 {alertEvent.titulo}
               </div>
               
               {/* Descrição com fade */}
-              <div className="text-base text-white opacity-90 animate-fade-in px-2 mx-auto">
+              <div className="text-sm text-white opacity-90 animate-fade-in px-2 mx-auto break-words">
                 {alertEvent.conteudo}
               </div>
             </div>
