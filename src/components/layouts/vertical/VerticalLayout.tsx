@@ -57,141 +57,65 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     return () => clearInterval(timer);
   }, []);
 
-  const isPast = (horarioInicio: string) => {
-    const [hora, minuto] = horarioInicio.split(':').map(Number);
-    const eventoTime = new Date();
-    const now = new Date();
-    eventoTime.setHours(hora, minuto, 0);
-    return eventoTime < now;
-  };
-
-  // Função para converter horário em minutos, considerando o reset às 2am
-  const convertToMinutes = (hora: number, minuto: number) => {
-    const now = new Date();
-    const currentHour = now.getHours();
-
-    // Se passou das 2h, os horários após 3h são considerados "primeiros"
-    if (currentHour >= 2) {
-      if (hora >= 3) {
-        return (hora * 60) + minuto;
-      } else {
-        return ((hora + 24) * 60) + minuto;
-      }
-    }
-    
-    // Comportamento normal para outros horários
-    if (hora >= 0 && hora <= 2) {
-      return ((hora + 24) * 60) + minuto;
-    }
-    return (hora * 60) + minuto;
-  };
-
   // Função para encontrar o evento mais recente
   const findMostRecentEvent = (cronograma: Slide[]) => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    if (!localTime) return -1;
+    
+    const currentHour = localTime.getHours();
+    const currentMinute = localTime.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
 
-    // Se for 2h, procura o próximo evento
-    if (currentHour === 2) {
-      // Encontra o próximo evento após 2h
-      const proximoEvento = cronograma.find((evento) => {
-        const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
-        const eventoMinutos = hora * 60 + minuto;
-        const agoraMinutos = currentHour * 60 + currentMinute;
-        
-        return eventoMinutos > agoraMinutos;
-      });
-
-      // Se não encontrou próximo evento ou ainda não chegou no horário, retorna -1
-      if (!proximoEvento) {
-        return -1;
-      }
-
-      // Se encontrou mas ainda não chegou no horário, retorna -1
-      if (!isEventoAtual(proximoEvento.horarioInicio)) {
-        return -1;
-      }
-
-      // Se chegou aqui, significa que encontrou o próximo evento e já está na hora
-      return cronograma.indexOf(proximoEvento);
-    }
-
-    // Comportamento normal para encontrar evento atual
-    let mostRecentEvent = -1;
-    let smallestDiff = Infinity;
+    let ultimoEvento = -1;
+    let menorDiferenca = Infinity;
 
     cronograma.forEach((evento, index) => {
       const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
-      const eventoTime = new Date();
-      eventoTime.setHours(hora, minuto, 0, 0);
+      const eventoMinutos = hora * 60 + minuto;
+      const diferenca = currentTotalMinutes - eventoMinutos;
 
-      // Ajusta a data do evento para comparação correta
-      if (currentHour >= 0 && currentHour < 2) {
-        if (hora > 12) {
-          eventoTime.setDate(eventoTime.getDate() - 1);
-        }
-      } else if (hora >= 0 && hora <= 2) {
-        eventoTime.setDate(eventoTime.getDate() + 1);
-      }
-
-      const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
-      
-      if (diffMinutes >= 0 && diffMinutes < smallestDiff) {
-        smallestDiff = diffMinutes;
-        mostRecentEvent = index;
+      if (diferenca > 0 && diferenca < menorDiferenca) {
+        menorDiferenca = diferenca;
+        ultimoEvento = index;
       }
     });
 
-    return mostRecentEvent;
+    return ultimoEvento;
   };
 
-  // Função para ordenar eventos por horário
-  const sortedCronograma = totem?.cronograma.sort((a, b) => {
-    const [horaA, minA] = a.horarioInicio.split(':').map(Number);
-    const [horaB, minB] = b.horarioInicio.split(':').map(Number);
-    
-    return convertToMinutes(horaA, minA) - convertToMinutes(horaB, minB);
-  });
+  // Criar uma cópia ordenada do cronograma para não mutar o original
+  const sortedCronograma = totem?.cronograma ? 
+    [...totem.cronograma].sort((a, b) => {
+      const [horaA, minA] = a.horarioInicio.split(':').map(Number);
+      const [horaB, minB] = b.horarioInicio.split(':').map(Number);
+      return (horaA * 60 + minA) - (horaB * 60 + minB);
+    }) : 
+    [];
 
   // Encontra o evento mais recente
-  const currentEventIndex = sortedCronograma ? 
+  const currentEventIndex = sortedCronograma.length > 0 ? 
     findMostRecentEvent(sortedCronograma) : -1;
 
-  const currentEvent = sortedCronograma?.[currentEventIndex];
+  const currentEvent = sortedCronograma[currentEventIndex];
   const currentColor = currentEvent?.cor || 'purple';
   const borderColorClass = eventColors[currentColor]?.border || 'border-purple-500';
 
-  // Encontrar evento atual com destaque ativo
-  const alertEvent = sortedCronograma?.find(slide => 
-    slide.destaque && isEventoAtual(slide.horarioInicio)
-  );
+  // Encontrar evento atual com destaque ativo usando o mesmo localTime
+  const alertEvent = localTime ? 
+    sortedCronograma.find(slide => 
+      slide.destaque && isEventoAtual(slide.horarioInicio)
+    ) : 
+    null;
 
   // Função para filtrar e ordenar os eventos que queremos mostrar
   const getFilteredEvents = (cronograma: Slide[], currentIndex: number) => {
     if (!cronograma?.length) return [];
 
-    // Encontra o índice do evento atual na lista filtrada
-    const currentEventPosition = Math.min(
-      cronograma.slice(0, currentIndex).length,
-      3  // máximo de 3 eventos anteriores
-    );
-
-    // Pega até 3 eventos antes do atual
-    const start = Math.max(0, currentIndex - 3);
-    const eventsBeforeCurrent = cronograma.slice(start, currentIndex);
-    
-    // Pega o evento atual
-    const currentEvent = cronograma[currentIndex];
-    
-    // E 5 eventos depois
-    const eventsAfterCurrent = cronograma.slice(currentIndex + 1, currentIndex + 6);
-
-    return [
-      ...eventsBeforeCurrent,
-      currentEvent,
-      ...eventsAfterCurrent
-    ].filter(Boolean);
+    // Retorna todos os eventos em ordem, sem filtrar
+    return cronograma.map((evento, index) => ({
+      ...evento,
+      isAtual: index === currentIndex,
+      isPassado: index < currentIndex
+    }));
   };
 
   if (alertEvent) {
@@ -256,14 +180,9 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
 
             {/* Lista de Eventos com textos menores */}
             <div className="flex-1 flex flex-col gap-2 w-full">
-              {sortedCronograma?.map((slide, index, array) => {
-                // Se for 2h, nenhum evento fica ativo
-                const currentEventPosition = currentEventIndex === -1 ? -1 : Math.min(
-                  sortedCronograma.slice(0, currentEventIndex).length,
-                  3
-                );
-                const isAtual = currentEventIndex !== -1 && index === currentEventPosition;
-                const isPassado = currentEventIndex !== -1 && index < currentEventPosition;
+              {sortedCronograma?.map((slide, index) => {
+                const isAtual = index === currentEventIndex;
+                const isPassado = index < currentEventIndex;
                 const corBase = eventColors[slide.cor || 'purple']?.bg || 'bg-purple-500';
 
                 return (

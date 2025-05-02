@@ -79,10 +79,11 @@ export default function TotemView({ params }: { params: Promise<{ id: string }> 
     currentTime: localTime,
     isEventoAtual: (horarioInicio: string) => {
       const [hora, minuto] = horarioInicio.split(':').map(Number);
-      const eventoTime = new Date();
-      eventoTime.setHours(hora, minuto, 0, 0);
-      const diffMinutes = Math.floor((localTime.getTime() - eventoTime.getTime()) / (1000 * 60));
-      return diffMinutes >= 0 && diffMinutes <= 2;
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      return hora === currentHour && Math.abs(currentMinute - minuto) <= 2;
     }
   };
 
