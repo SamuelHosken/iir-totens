@@ -76,9 +76,21 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
       const eventoTime = new Date();
       eventoTime.setHours(hora, minuto, 0, 0);
 
+      // Ajusta a data do evento para comparação correta
+      if (now.getHours() >= 0 && now.getHours() <= 3) {
+        // Se estamos entre 00h e 03h
+        if (hora > 12) {
+          // Eventos do dia anterior (ex: 19h, 20h, etc)
+          eventoTime.setDate(eventoTime.getDate() - 1);
+        }
+      } else if (hora >= 0 && hora <= 3) {
+        // Eventos entre 00h e 03h quando não estamos nesse período
+        eventoTime.setDate(eventoTime.getDate() + 1);
+      }
+
       const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
       
-      // Só considera eventos que já aconteceram (diff positivo)
+      // Só considera eventos que já aconteceram (diff positivo) e pega o mais recente
       if (diffMinutes >= 0 && diffMinutes < smallestDiff) {
         smallestDiff = diffMinutes;
         mostRecentEvent = index;
@@ -161,7 +173,7 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
               </div>
               
               {/* Título com glow */}
-              <div className="text-xl font-bold mb-3 text-white animate-glow mx-auto px-2">
+       o       <div className="text-xl font-bold mb-3 text-white animate-glow mx-auto px-2">
                 {alertEvent.titulo}
               </div>
               
