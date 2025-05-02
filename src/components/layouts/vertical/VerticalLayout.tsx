@@ -65,17 +65,59 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     return eventoTime < now;
   };
 
+  // Função para converter horário em minutos, considerando o reset às 2am
+  const convertToMinutes = (hora: number, minuto: number) => {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    // Se passou das 2h, os horários após 3h são considerados "primeiros"
+    if (currentHour >= 2) {
+      if (hora >= 3) {
+        return (hora * 60) + minuto;
+      } else {
+        return ((hora + 24) * 60) + minuto;
+      }
+    }
+    
+    // Comportamento normal para outros horários
+    if (hora >= 0 && hora <= 2) {
+      return ((hora + 24) * 60) + minuto;
+    }
+    return (hora * 60) + minuto;
+  };
+
   // Função para encontrar o evento mais recente
   const findMostRecentEvent = (cronograma: Slide[]) => {
     const now = new Date();
     const currentHour = now.getHours();
-    const currentMinutes = now.getMinutes();
+    const currentMinute = now.getMinutes();
 
-    // Se for 2h da manhã ou mais (até 3:59), retorna -1 para resetar o totem
-    if (currentHour >= 2 && currentHour < 4) {
-      return -1;
+    // Se for 2h, procura o próximo evento
+    if (currentHour === 2) {
+      // Encontra o próximo evento após 2h
+      const proximoEvento = cronograma.find((evento) => {
+        const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
+        const eventoMinutos = hora * 60 + minuto;
+        const agoraMinutos = currentHour * 60 + currentMinute;
+        
+        return eventoMinutos > agoraMinutos;
+      });
+
+      // Se não encontrou próximo evento ou ainda não chegou no horário, retorna -1
+      if (!proximoEvento) {
+        return -1;
+      }
+
+      // Se encontrou mas ainda não chegou no horário, retorna -1
+      if (!isEventoAtual(proximoEvento.horarioInicio)) {
+        return -1;
+      }
+
+      // Se chegou aqui, significa que encontrou o próximo evento e já está na hora
+      return cronograma.indexOf(proximoEvento);
     }
 
+    // Comportamento normal para encontrar evento atual
     let mostRecentEvent = -1;
     let smallestDiff = Infinity;
 
@@ -86,19 +128,15 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
 
       // Ajusta a data do evento para comparação correta
       if (currentHour >= 0 && currentHour < 2) {
-        // Se estamos entre 00h e 02h
         if (hora > 12) {
-          // Eventos do dia anterior (ex: 19h, 20h, etc)
           eventoTime.setDate(eventoTime.getDate() - 1);
         }
-      } else if (hora >= 0 && hora < 4) {
-        // Eventos entre 00h e 04h quando não estamos nesse período
+      } else if (hora >= 0 && hora <= 2) {
         eventoTime.setDate(eventoTime.getDate() + 1);
       }
 
       const diffMinutes = Math.floor((now.getTime() - eventoTime.getTime()) / (1000 * 60));
       
-      // Só considera eventos que já aconteceram (diff positivo) e pega o mais recente
       if (diffMinutes >= 0 && diffMinutes < smallestDiff) {
         smallestDiff = diffMinutes;
         mostRecentEvent = index;
@@ -106,15 +144,6 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     });
 
     return mostRecentEvent;
-  };
-
-  // Função para converter horário em minutos, considerando horários após meia-noite
-  const convertToMinutes = (hora: number, minuto: number) => {
-    // Se o horário for entre meia-noite e 3am, adiciona 24h
-    if (hora >= 0 && hora <= 3) {
-      return ((hora + 24) * 60) + minuto;
-    }
-    return (hora * 60) + minuto;
   };
 
   // Função para ordenar eventos por horário
@@ -227,14 +256,14 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
 
             {/* Lista de Eventos com textos menores */}
             <div className="flex-1 flex flex-col gap-2 w-full">
-              {sortedCronograma && currentEventIndex !== -1 && getFilteredEvents(sortedCronograma, currentEventIndex).map((slide, index, array) => {
-                // isAtual será true para o evento que corresponde ao currentIndex
-                const currentEventPosition = Math.min(
+              {sortedCronograma?.map((slide, index, array) => {
+                // Se for 2h, nenhum evento fica ativo
+                const currentEventPosition = currentEventIndex === -1 ? -1 : Math.min(
                   sortedCronograma.slice(0, currentEventIndex).length,
                   3
                 );
-                const isAtual = index === currentEventPosition;
-                const isPassado = index < currentEventPosition;
+                const isAtual = currentEventIndex !== -1 && index === currentEventPosition;
+                const isPassado = currentEventIndex !== -1 && index < currentEventPosition;
                 const corBase = eventColors[slide.cor || 'purple']?.bg || 'bg-purple-500';
 
                 return (
