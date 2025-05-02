@@ -68,6 +68,14 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
   // Função para encontrar o evento mais recente
   const findMostRecentEvent = (cronograma: Slide[]) => {
     const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    // Se for 2h da manhã ou mais (até 3:59), retorna -1 para resetar o totem
+    if (currentHour >= 2 && currentHour < 4) {
+      return -1;
+    }
+
     let mostRecentEvent = -1;
     let smallestDiff = Infinity;
 
@@ -77,14 +85,14 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
       eventoTime.setHours(hora, minuto, 0, 0);
 
       // Ajusta a data do evento para comparação correta
-      if (now.getHours() >= 0 && now.getHours() <= 3) {
-        // Se estamos entre 00h e 03h
+      if (currentHour >= 0 && currentHour < 2) {
+        // Se estamos entre 00h e 02h
         if (hora > 12) {
           // Eventos do dia anterior (ex: 19h, 20h, etc)
           eventoTime.setDate(eventoTime.getDate() - 1);
         }
-      } else if (hora >= 0 && hora <= 3) {
-        // Eventos entre 00h e 03h quando não estamos nesse período
+      } else if (hora >= 0 && hora < 4) {
+        // Eventos entre 00h e 04h quando não estamos nesse período
         eventoTime.setDate(eventoTime.getDate() + 1);
       }
 
