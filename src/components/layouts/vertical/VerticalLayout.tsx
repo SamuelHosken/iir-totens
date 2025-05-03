@@ -65,12 +65,29 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     const currentMinute = localTime.getMinutes();
     const currentTotalMinutes = currentHour * 60 + currentMinute;
 
+    // Se passou da 1:30 da manhã, mantém o último evento do dia anterior
+    if (currentHour === 1 && currentMinute > 30) {
+      return cronograma.length - 1;
+    }
+
     let ultimoEvento = -1;
     let menorDiferenca = Infinity;
 
     cronograma.forEach((evento, index) => {
       const [hora, minuto] = evento.horarioInicio.split(':').map(Number);
-      const eventoMinutos = hora * 60 + minuto;
+      let eventoMinutos = hora * 60 + minuto;
+
+      // Ajusta eventos após meia-noite até 1:30
+      if (hora >= 0 && hora <= 1) {
+        if (currentHour >= 0 && currentHour <= 1) {
+          // Estamos no mesmo período (após meia-noite)
+          eventoMinutos = hora * 60 + minuto;
+        } else {
+          // Estamos antes da meia-noite, esses eventos são para amanhã
+          eventoMinutos = (hora + 24) * 60 + minuto;
+        }
+      }
+
       const diferenca = currentTotalMinutes - eventoMinutos;
 
       if (diferenca > 0 && diferenca < menorDiferenca) {
@@ -87,7 +104,15 @@ export function VerticalLayout({ totem, currentTime: initialTime, isEventoAtual 
     [...totem.cronograma].sort((a, b) => {
       const [horaA, minA] = a.horarioInicio.split(':').map(Number);
       const [horaB, minB] = b.horarioInicio.split(':').map(Number);
-      return (horaA * 60 + minA) - (horaB * 60 + minB);
+      
+      let minutosA = horaA * 60 + minA;
+      let minutosB = horaB * 60 + minB;
+
+      // Ajusta eventos após meia-noite para ordenação correta
+      if (horaA >= 0 && horaA <= 1) minutosA += 24 * 60;
+      if (horaB >= 0 && horaB <= 1) minutosB += 24 * 60;
+
+      return minutosA - minutosB;
     }) : 
     [];
 

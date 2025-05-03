@@ -11,6 +11,7 @@ import { EventColor } from '@/types/schedule';
 import { nanoid } from 'nanoid';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
+
 // Shadcn Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,18 @@ export default function LayoutCronograma({
 
   const layout = totem?.layouts?.find(l => l.id === layoutId);
 
+  // Função para converter horário em minutos, considerando a ordem correta
+  const converterParaMinutos = (horario: string) => {
+    const [hora, minuto] = horario.split(':').map(Number);
+    
+    // Se for entre meia-noite e 1:30, considera como horário do dia anterior
+    if (hora >= 0 && hora <= 1 && (hora !== 1 || minuto <= 30)) {
+      return (hora + 24) * 60 + minuto;
+    }
+    
+    return hora * 60 + minuto;
+  };
+
   const handleCreateEvento = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!totem || !layout) return;
@@ -67,8 +80,8 @@ export default function LayoutCronograma({
         nome: novoEvento.nome,
         descricao: novoEvento.descricao,
         horarioInicio: novoEvento.horarioInicio,
-        cor: novoEvento.cor || 'purple', // Valor padrão se não for selecionado
-        destaque: false // Valor inicial do destaque
+        cor: novoEvento.cor || 'purple',
+        destaque: false
       };
 
       const updatedLayouts = totem.layouts.map(l => {
@@ -197,9 +210,12 @@ export default function LayoutCronograma({
     }
   };
 
-  const eventoOrdenados = layout?.cronograma.sort((a, b) => 
-    a.horarioInicio.localeCompare(b.horarioInicio)
-  ) || [];
+  // Ao exibir o cronograma, ordenar corretamente
+  const cronogramaOrdenado = layout?.cronograma.slice().sort((a, b) => {
+    const minutosA = converterParaMinutos(a.horarioInicio);
+    const minutosB = converterParaMinutos(b.horarioInicio);
+    return minutosA - minutosB;
+  });
 
   return (
     <ProtectedRoute>
@@ -315,7 +331,7 @@ export default function LayoutCronograma({
           </div>
 
           <div className="space-y-4">
-            {eventoOrdenados.map((evento) => (
+            {cronogramaOrdenado?.map((evento) => (
               <Card key={evento.id} className="card-subtle bg-card">
                 <CardContent className="flex items-center justify-between py-6">
                   <div className="flex items-center gap-4">
